@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  overscroll-behavior-y: none;
+}
+input[type='date'],
+input[type='datetime-local'] {
+  min-height: 38px;
+}
+
+/* položky gridu se nesmí roztáhnout dlouhým textem (truncate) – jinak stránka na mobilu přetéká */
+.grid > * {
+  min-width: 0;
+}
