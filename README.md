@@ -1,4 +1,4 @@
-# StrojPark – správa stavebních strojů, servisu a půjčovny
+# StrojPark – prodej, nákup, servis a půjčovna stavebních strojů
 
 Jedna aplikace pro **Windows, macOS, Android (telefony i tablety) a iOS/iPadOS**.
 Celý tým sdílí stejná data, fotky a dokumenty v cloudu a změny od kolegů se zobrazí okamžitě.
@@ -7,13 +7,14 @@ Celý tým sdílí stejná data, fotky a dokumenty v cloudu a změny od kolegů 
 
 | Oblast | Funkce |
 |---|---|
-| **Stroje** | Karta stroje (kategorie, značka, typ, rok, motohodiny, výr. číslo, hmotnost, výkon, stav, umístění, popis), prodejní a pořizovací cena, zařazení na prodej a do půjčovny, stroje zákazníků. Vyhledávání a filtry, dlaždice nebo tabulka. |
-| **Fotky a dokumenty** | Vyfocení přímo v aplikaci nebo výběr více fotek z galerie, automatické zmenšení před nahráním, hlavní fotka, prohlížeč fotek. Dokumenty (PDF, Word, Excel…) ke každému stroji. Vše je v cloudovém úložišti. |
-| **AI rozpoznání** | Z 1–5 fotek rozpozná druh stroje, značku, typ, odhadne rok výroby, hmotnost, výkon a popíše viditelný stav. Údaje jdou jedním kliknutím převzít do formuláře. Používá model Claude (Anthropic). |
-| **Servis** | Příjem stroje (zákazník, motohodiny, závada, stav, příslušenství, fotky z příjmu) → diagnostika → čekání na díly → oprava → hotovo → předáno. Pracovní list (práce techniků v hodinách), náhradní díly (objednáno/skladem/použito), fotky průběhu i dokončení, kalkulace s DPH, **PDF pracovní list** s podpisy. |
-| **Půjčovna** | Ceník každého stroje (hodina, den, víkend, týden, měsíc, kauce, obsluha), **cenotvorba** – dopočítání sazeb z denní ceny nebo návrh z hodnoty stroje podle nastavitelných koeficientů. **PDF ceník** (s fotkami, s/bez DPH, volba sloupců). |
-| **Rezervace a vytížení** | Pronájem, rezervace k pronájmu, rezervace k prodeji, prodej. Automatický výpočet ceny z ceníku, kontrola kolizí termínů, akce Vydat / Vráceno / Prodáno. Stav stroje se ukazuje všude: **Volný · Půjčeno · Po termínu · Rezervováno k pronájmu · Rezervováno k prodeji · V servisu · Prodáno**. Časová osa vytížení s procentem využití. |
-| **Přehled** | Počty strojů podle stavu, rozpracovaný servis, výdeje a vrácení na 7 dní, upozornění na stroje po termínu. |
+| **Prodej** (hlavní) | Nabídka strojů s cenou, náklady, marží a dobou na skladě. **Zájemci a poptávky** (zdroj, stav jednání, nabídnutá cena, datum dalšího kontaktu, volání jedním klepnutím), obecné poptávky „zákazník hledá…“. **Prodejní list stroje v PDF** s fotkami a **PDF katalog nabídky**. **AI inzerát** v češtině, angličtině a němčině. Záznam prodeje (cena, kupec) se skutečným ziskem, přehled prodaných strojů, tržeb a zisku za rok. |
+| **Nákup a dovoz** | Nákupní karta stroje: prodejce, země, odkaz na inzerát/aukci, měna a kurz (**kurzy ČNB jedním tlačítkem**), daňový režim (EU reverse charge, tuzemsko, dovoz mimo EU, § 90, neplátce), doprava, clo, aukční poplatek, prohlídka, registrace. Náklady na opravy se přičtou ze servisu → **skutečná pořizovací cena a návrh prodejní ceny** podle cílové marže. Stav nákupu (vyhlédnuto → prověřování → vyjednávání → koupeno → na cestě → dorazilo), **kontrolní seznam** (19 bodů), **kalkulačka dopravy do ČR** s upozorněním na nadrozměrnou přepravu, **Průvodce nákupem a dovozem**. |
+| **Přehled** | Hodnota a očekávaný zisk strojů na prodej, prodeje a zisk za rok, komu se dnes ozvat, stroje dlouho na skladě, nákupy na cestě, servis, půjčovna. |
+| **Stroje** | Karta stroje (kategorie, značka, typ, rok, motohodiny, výr. číslo, hmotnost, výkon, přepravní rozměry, stav, umístění, popis), stroje zákazníků. Vyhledávání a filtry, dlaždice nebo tabulka. |
+| **Fotky a dokumenty** | Vyfocení přímo v aplikaci nebo výběr více fotek z galerie, automatické zmenšení, hlavní fotka, prohlížeč. Dokumenty (PDF, Word, Excel…) ke každému stroji. Vše v cloudovém úložišti. |
+| **AI** | Rozpoznání stroje z 1–5 fotek (druh, značka, typ, rok, hmotnost, výkon, přepravní rozměry, viditelný stav) a psaní inzerátů. Model Claude (Anthropic), klíč je jen na serveru. |
+| **Servis** | Příjem → diagnostika → čeká na díly → oprava → hotovo → předáno. Pracovní list, náhradní díly, fotky z příjmu, průběhu i dokončení, kalkulace s DPH, **PDF pracovní list**. Servis vlastních strojů se počítá do nákladů stroje. |
+| **Půjčovna** | Ceník a cenotvorba, **PDF ceník**, pronájmy a rezervace s kontrolou kolizí, stavy strojů, časová osa vytížení. |
 
 Všichni přihlášení uživatelé mohou vše prohlížet i upravovat; u záznamů se ukládá, kdo je založil a kdo je naposledy změnil.
 
@@ -28,7 +29,8 @@ Supabase (cloud)
  ├─ PostgreSQL – data + realtime synchronizace mezi uživateli
  ├─ Storage    – fotky a dokumenty (soukromý bucket)
  ├─ Auth       – přihlášení e-mailem a heslem
- └─ Edge Function recognize-machine → Claude API (API klíč zůstává na serveru)
+ ├─ Edge Function ai        → Claude API: rozpoznání stroje, inzeráty (klíč zůstává na serveru)
+ └─ Edge Function cnb-rates → denní kurzy ČNB
 ```
 
 Bez nastaveného cloudu běží aplikace v **lokálním (demo) režimu** – data jsou jen v daném zařízení (IndexedDB). Hodí se k vyzkoušení; v Nastavení lze vložit ukázková data.
@@ -50,12 +52,12 @@ Otevřete adresu, kterou vypíše (např. http://localhost:5173), jděte do **Na
 ### 1. Supabase projekt
 
 1. Založte projekt na [supabase.com](https://supabase.com) (region např. Frankfurt – `eu-central-1`).
-2. **SQL Editor** → vložte obsah `supabase/migrations/001_init.sql` → **Run**. Vytvoří tabulky, oprávnění, úložiště `media` a realtime.
+2. **SQL Editor** → vložte obsah `supabase/migrations/001_init.sql` → **Run**, potom stejně `supabase/migrations/002_prodej_nakup.sql`. Vytvoří tabulky, oprávnění, úložiště `media` a realtime.
 3. **Authentication → Providers → Email**: vypněte „Allow new users to sign up“ (účty bude zakládat jen správce).
 4. **Authentication → Users → Invite user**: pozvěte kolegy e-mailem. Jméno, které se zobrazuje u záznamů, nastavíte v uživateli jako `full_name` v *User Metadata*.
 5. **Project Settings → API**: zkopírujte *Project URL* a *anon public key*.
 
-### 2. AI rozpoznávání strojů
+### 2. AI (rozpoznávání strojů, inzeráty) a kurzy ČNB
 
 Potřebujete API klíč z [console.anthropic.com](https://console.anthropic.com) a [Supabase CLI](https://supabase.com/docs/guides/cli):
 
@@ -72,10 +74,14 @@ npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ```bash
-npx supabase functions deploy recognize-machine
+npx supabase functions deploy ai
 ```
 
-Funkce používá model `claude-opus-5-5`, odpověď vrací ve strukturovaném JSON a při odmítnutí požadavku automaticky zkusí záložní model. Jedno rozpoznání (až 5 fotek) stojí v řádu jednotek korun.
+```bash
+npx supabase functions deploy cnb-rates
+```
+
+Funkce `ai` umí jen dvě úlohy – rozpoznat stroj z fotek a napsat inzerát. Používá model `claude-opus-5-5`, vrací strukturovaný JSON a při odmítnutí požadavku automaticky zkusí záložní model. Jedno volání stojí v řádu jednotek korun. Funkce `cnb-rates` stahuje denní kurzy ČNB pro přepočet nákupních cen.
 
 ### 3. Konfigurace aplikace
 
@@ -90,11 +96,12 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 
 ### 4. Web / PWA – Windows, Mac, Android, iPhone, iPad
 
-```bash
-npm run build
-```
+Aplikace se po každé změně ve větvi `main` automaticky sestaví a zveřejní na **GitHub Pages** (`.github/workflows/deploy.yml`):
+**https://radimstepanik3-dev.github.io/belvitaequipmanager/**
 
-Složku `dist/` nahrajte na libovolný HTTPS hosting (Netlify, Vercel, Cloudflare Pages, firemní web…). Pak:
+Pro připojení cloudu v této verzi nastavte v GitHubu *Settings → Secrets and variables → Actions → Variables* proměnné `VITE_SUPABASE_URL` a `VITE_SUPABASE_ANON_KEY` a spusťte workflow znovu. (Jinde lze `npm run build` a nahrát složku `dist/` na libovolný HTTPS hosting.)
+
+Instalace do zařízení:
 
 - **Windows / Mac**: otevřít v Chrome nebo Edge → ikona *Instalovat* v adresním řádku → aplikace se chová jako běžný program (vlastní okno, ikona na ploše / v Docku).
 - **Android**: Chrome → menu → *Přidat na plochu / Instalovat aplikaci*.
@@ -139,23 +146,27 @@ src/
   lib/
     types.ts            datový model
     domain.ts           stavy strojů, cenotvorba, výpočet ceny pronájmu, kolize, vytížení
+    trade.ts            prodej a nákup: zájemci, marže, pořizovací náklady, země, doprava, kontrolní seznam
     backend/            local.ts (IndexedDB) a supabase.ts (cloud) se stejným rozhraním
     ai.ts               AI rozpoznávání strojů
-    pdf.ts              PDF ceník a PDF pracovní list (pdfmake, plná podpora češtiny)
+    pdf.ts              PDF prodejní list, katalog nabídky, ceník půjčovny, pracovní list (plná čeština)
     media.ts            focení, zmenšení a nahrávání fotek/dokumentů
-  pages/                Přehled, Stroje, Detail stroje, Servis, Půjčovna, Nastavení
+  pages/                Přehled, Prodej, Nákup, Průvodce, Stroje, Detail stroje, Servis, Půjčovna, Nastavení
   components/           UI prvky, fotky, rezervace, ceník
 supabase/
-  migrations/001_init.sql
-  functions/recognize-machine/index.ts
+  migrations/001_init.sql, 002_prodej_nakup.sql
+  functions/ai/           AI rozpoznávání a inzeráty (Claude)
+  functions/cnb-rates/    kurzy ČNB
+  functions/_shared/      zadání pro AI a parser kurzů (sdílí je i aplikace)
 android/                nativní Android projekt (Capacitor)
 ```
 
 ## Možná další rozšíření
 
-- Předávací protokol a nájemní smlouva v PDF pro půjčovnu
-- Evidence zákazníků jako samostatný adresář
-- Připomínky pravidelného servisu podle motohodin, STK/revize
-- Role uživatelů (např. technik nevidí nákupní ceny)
+- Veřejný katalog strojů na webu firmy (napojený na data z aplikace)
+- Automatické odesílání inzerátů na Mascus / Machineryline přes jejich API
+- Kupní smlouva a předávací protokol v PDF
+- Evidence zákazníků jako samostatný adresář, historie nákupů zákazníka
+- Role uživatelů (např. technik nevidí nákupní ceny a marže)
 - Export do účetnictví (Pohoda, Money S3), fakturace
-- Offline režim v cloudu (fronta změn při výpadku signálu na stavbě)
+- Offline režim v cloudu (fronta změn při výpadku signálu)

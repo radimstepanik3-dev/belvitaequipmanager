@@ -13,8 +13,8 @@ export interface BaseRow {
 
 /** Vlastní stroj (na prodej / půjčovnu) nebo stroj zákazníka přijatý do servisu. */
 export type Ownership = 'vlastni' | 'zakaznik';
-/** Životní cyklus vlastního stroje. */
-export type Lifecycle = 'aktivni' | 'prodano' | 'vyrazeno';
+/** Životní cyklus vlastního stroje. 'nakup' = vyhlédnutý / kupovaný / na cestě do ČR. */
+export type Lifecycle = 'nakup' | 'aktivni' | 'prodano' | 'vyrazeno';
 
 export interface Machine extends BaseRow {
   name: string;
@@ -38,6 +38,75 @@ export interface Machine extends BaseRow {
   for_rent: boolean;
   cover_media_id: ID | null;
   ai_data: AiRecognition | null;
+  // přepravní rozměry (m)
+  transport_length_m: number | null;
+  transport_width_m: number | null;
+  transport_height_m: number | null;
+  // prodej
+  sold_price: number | null; // bez DPH
+  sold_at: string | null; // yyyy-MM-dd
+  buyer_name: string;
+  listing: AiListing | null; // texty inzerátu
+}
+
+export type PurchaseStatus = 'vyhlednuto' | 'proverovani' | 'vyjednavani' | 'koupeno' | 'preprava' | 'dorazilo' | 'nekoupeno';
+export type PurchaseSource = 'dealer' | 'aukce' | 'soukromnik' | 'firma' | 'leasing' | 'protiucet';
+/** Daňový režim nákupu. */
+export type VatRegime = 'cz' | 'eu' | 'import' | 'margin' | 'neplatce';
+
+/** Nákup stroje včetně dovozu do ČR. id === machine_id */
+export interface Purchase extends BaseRow {
+  machine_id: ID;
+  status: PurchaseStatus;
+  source: PurchaseSource;
+  seller_name: string;
+  seller_contact: string;
+  seller_vat_id: string;
+  country: string; // ISO kód (DE, NL, …)
+  city: string;
+  listing_url: string;
+  purchase_date: string | null;
+  currency: string; // CZK, EUR, …
+  price_foreign: number | null; // bez DPH v měně nákupu
+  exchange_rate: number; // CZK za 1 jednotku měny
+  vat_regime: VatRegime;
+  distance_km: number | null;
+  transport_cost: number | null;
+  customs_cost: number | null;
+  auction_fee: number | null;
+  inspection_cost: number | null;
+  registration_cost: number | null;
+  other_cost: number | null;
+  other_note: string;
+  expected_arrival: string | null;
+  checklist: Record<string, boolean>;
+  notes: string;
+}
+
+export type LeadStatus = 'novy' | 'kontaktovan' | 'prohlidka' | 'nabidka' | 'vyjednavani' | 'vyhrano' | 'ztraceno';
+
+/** Zájemce o koupi konkrétního stroje, nebo obecná poptávka (machine_id = null). */
+export interface Lead extends BaseRow {
+  machine_id: ID | null;
+  wanted: string; // co hledá (u obecné poptávky)
+  customer_name: string;
+  company: string;
+  phone: string;
+  email: string;
+  source: string;
+  status: LeadStatus;
+  offered_price: number | null;
+  next_contact: string | null; // yyyy-MM-dd
+  note: string;
+}
+
+export interface AiListing {
+  title: string;
+  text_cs: string;
+  text_en: string;
+  text_de: string;
+  highlights: string[];
+  generated_at?: string;
 }
 
 export type MediaKind = 'photo' | 'document';
@@ -158,6 +227,20 @@ export interface CompanySettings {
   // denní cena jako % z pořizovací/prodejní ceny
   daily_pct_of_value: number;
   categories: string[];
+  // prodej a nákup
+  target_margin_pct: number;
+  stock_warn_days: number;
+  currency_rates: Record<string, number>; // CZK za 1 jednotku
+  rates_date: string;
+  base_city: string;
+  // doprava – Kč/km dle hmotnostní třídy
+  tr_rate_small: number; // do 3,5 t
+  tr_rate_medium: number; // do 12 t
+  tr_rate_large: number; // do 25 t
+  tr_rate_heavy: number; // nad 25 t
+  tr_return_factor: number; // násobek za cestu zpět / přistavení
+  tr_loading_fee: number;
+  tr_oversize_fee: number;
 }
 
 export interface SettingsRow extends BaseRow {
@@ -176,6 +259,9 @@ export interface AiRecognition {
   confidence: 'vysoka' | 'stredni' | 'nizka';
   visible_condition: string;
   notes: string;
+  transport_length_m: number | null;
+  transport_width_m: number | null;
+  transport_height_m: number | null;
   recognized_at?: string;
 }
 
@@ -188,6 +274,8 @@ export interface TableMap {
   rental_rates: RentalRate;
   bookings: Booking;
   settings: SettingsRow;
+  purchases: Purchase;
+  leads: Lead;
 }
 
 export type TableName = keyof TableMap;
@@ -200,4 +288,6 @@ export const TABLES: TableName[] = [
   'rental_rates',
   'bookings',
   'settings',
+  'purchases',
+  'leads',
 ];

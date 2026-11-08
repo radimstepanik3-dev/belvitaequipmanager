@@ -16,7 +16,8 @@ class LocalDB extends Dexie {
     super('strojpark');
     const schema: Record<string, string> = { files: 'path' };
     for (const t of TABLES) schema[t] = 'id, machine_id, service_order_id';
-    this.version(1).stores(schema);
+    this.version(1).stores({ files: 'path', ...Object.fromEntries(TABLES.slice(0, 8).map((t) => [t, 'id, machine_id, service_order_id'])) });
+    this.version(2).stores(schema); // + purchases, leads
   }
   t<K extends TableName>(name: K): Table<TableMap[K], string> {
     return this.table(name);

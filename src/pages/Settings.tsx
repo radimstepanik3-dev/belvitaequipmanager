@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Cloud, Download, HardDrive, LogOut, Upload, Database } from 'lucide-react';
+import { Cloud, Download, HardDrive, LogOut, Upload, Database, RefreshCw } from 'lucide-react';
+import { loadCnbRates } from '../lib/ai';
+import { CURRENCIES } from '../lib/trade';
 import { backend, cloud, isCloud, local } from '../lib/backend';
 import { useSettings } from '../lib/hooks';
 import { getLocalAiKey, getLocalUserName, getSupabaseConfig, setLocalAiKey, setLocalUserName, setSupabaseConfig } from '../lib/config';
@@ -22,6 +24,22 @@ export function SettingsPage() {
     inputMode: 'decimal' as const,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => set(k, (numOrNull(e.target.value) ?? 0) as never),
   });
+
+  const [ratesBusy, setRatesBusy] = useState(false);
+  const loadRates = async () => {
+    setRatesBusy(true);
+    try {
+      const r = await loadCnbRates();
+      const next = { ...s, currency_rates: { ...s.currency_rates, ...Object.fromEntries(CURRENCIES.filter((c) => r.rates[c]).map((c) => [c, Math.round(r.rates[c] * 10000) / 10000])) }, rates_date: r.date };
+      setS(next);
+      await save(next);
+      toast(`Kurzy ČNB načteny (${r.date})`);
+    } catch (e) {
+      toast(errorMessage(e), 'err');
+    } finally {
+      setRatesBusy(false);
+    }
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -103,6 +121,66 @@ export function SettingsPage() {
           </div>
         </Card>
 
+        <Card title="Prodej a nákup">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Field label="Cílová marže (%)" hint="pro návrh prodejní ceny">
+              <Input {...num('target_margin_pct')} />
+            </Field>
+            <Field label="Upozornit po dnech skladem">
+              <Input {...num('stock_warn_days')} />
+            </Field>
+            <Field label="Sídlo / cíl dopravy">
+              <Input {...txt('base_city')} />
+            </Field>
+          </div>
+          <div className="mt-4 mb-1 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-medium text-slate-600">
+              Kurzy měn (Kč za 1 jednotku){s.rates_date && <span className="text-slate-400"> · ČNB {s.rates_date}</span>}
+            </div>
+            <Button size="sm" onClick={loadRates} busy={ratesBusy}>
+              <RefreshCw className="h-4 w-4" /> Načíst kurzy ČNB
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {CURRENCIES.filter((c) => c !== 'CZK').map((c) => (
+              <Field key={c} label={c}>
+                <Input
+                  inputMode="decimal"
+                  value={s.currency_rates[c] ?? ''}
+                  onChange={(e) => set('currency_rates', { ...s.currency_rates, [c]: numOrNull(e.target.value) ?? 0 })}
+                />
+              </Field>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="Doprava – sazby pro odhad ceny">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Field label="do 3,5 t (Kč/km)">
+              <Input {...num('tr_rate_small')} />
+            </Field>
+            <Field label="3,5–12 t (Kč/km)">
+              <Input {...num('tr_rate_medium')} />
+            </Field>
+            <Field label="12–25 t (Kč/km)">
+              <Input {...num('tr_rate_large')} />
+            </Field>
+            <Field label="nad 25 t (Kč/km)">
+              <Input {...num('tr_rate_heavy')} />
+            </Field>
+            <Field label="Násobek (přistavení / cesta zpět)">
+              <Input {...num('tr_return_factor')} />
+            </Field>
+            <Field label="Nakládka / vykládka (Kč)">
+              <Input {...num('tr_loading_fee')} />
+            </Field>
+            <Field label="Příplatek nadrozměr (Kč)">
+              <Input {...num('tr_oversize_fee')} />
+            </Field>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">Upravte podle cen, které vám skutečně účtují vaši dopravci – odhady pak budou přesnější.</p>
+        </Card>
+
         <Card title="Kategorie strojů">
           <Field label="Jedna kategorie na řádek">
             <Textarea
@@ -168,7 +246,7 @@ function ConnectionCard() {
             <Field label="Vaše jméno (zapisuje se k záznamům)">
               <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setLocalUserName(name)} />
             </Field>
-            <Field label="Anthropic API klíč pro AI rozpoznávání (jen lokální režim)" hint="V cloudu je klíč bezpečně uložen na serveru.">
+            <Field label="Anthropic API klíč pro AI – rozpoznávání strojů a inzeráty (jen lokální režim)" hint="V cloudu je klíč bezpečně uložen na serveru.">
               <Input type="password" value={aiKey} onChange={(e) => setAiKey(e.target.value)} onBlur={() => (setLocalAiKey(aiKey), toast('Uloženo'))} placeholder="sk-ant-…" />
             </Field>
           </div>

@@ -14,6 +14,9 @@ import { ServiceDetail } from './pages/ServiceDetail';
 import { Rental } from './pages/Rental';
 import { SettingsPage } from './pages/Settings';
 import { Login } from './pages/Login';
+import { Sales } from './pages/Sales';
+import { Purchases } from './pages/Purchases';
+import { Guide } from './pages/Guide';
 
 export default function App() {
   const [ready, setReady] = useState(!cloud);
@@ -42,6 +45,9 @@ export default function App() {
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="prodej" element={<Sales />} />
+                <Route path="nakup" element={<Purchases />} />
+                <Route path="pruvodce" element={<Guide />} />
                 <Route path="stroje" element={<Machines />} />
                 <Route path="stroje/novy" element={<MachineForm />} />
                 <Route path="stroje/:id" element={<MachineDetail />} />

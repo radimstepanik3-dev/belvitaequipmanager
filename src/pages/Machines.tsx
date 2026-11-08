@@ -8,7 +8,7 @@ import { AvailabilityBadge } from '../components/MachineStatus';
 import { CoverImage } from '../components/Media';
 import { cls, machineTitle, money, number } from '../lib/util';
 
-type Purpose = '' | 'prodej' | 'pujcovna' | 'zakaznik' | 'archiv';
+type Purpose = '' | 'prodej' | 'pujcovna' | 'zakaznik' | 'nakup' | 'archiv';
 
 export function Machines() {
   const f = useFleet();
@@ -33,7 +33,9 @@ export function Machines() {
     return f.machines
       .filter((m) => {
         if (purpose === 'archiv') {
-          if (m.lifecycle === 'aktivni') return false;
+          if (m.lifecycle !== 'prodano' && m.lifecycle !== 'vyrazeno') return false;
+        } else if (purpose === 'nakup') {
+          if (m.lifecycle !== 'nakup') return false;
         } else if (m.lifecycle !== 'aktivni' && stav !== 'prodano') return false;
         if (purpose === 'prodej' && !m.for_sale) return false;
         if (purpose === 'pujcovna' && !m.for_rent) return false;
@@ -76,6 +78,7 @@ export function Machines() {
           <option value="">Všechny vlastní</option>
           <option value="prodej">Na prodej</option>
           <option value="pujcovna">V půjčovně</option>
+          <option value="nakup">V nákupu / na cestě</option>
           <option value="zakaznik">Stroje zákazníků</option>
           <option value="archiv">Prodané / vyřazené</option>
         </Select>

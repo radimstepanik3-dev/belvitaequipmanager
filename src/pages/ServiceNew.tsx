@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { backend } from '../lib/backend';
 import { useFleet } from '../lib/fleet';
 import { useSettings } from '../lib/hooks';
-import { nextServiceNumber } from '../lib/domain';
+import { EMPTY_MACHINE, nextServiceNumber } from '../lib/domain';
 import { aiAvailable, recognizeMachine } from '../lib/ai';
 import { uploadMedia } from '../lib/media';
 import type { Machine, ServiceOrder } from '../lib/types';
@@ -96,6 +96,7 @@ export function ServiceNew() {
       let mId = machineId;
       if (newMachine) {
         const m = await backend.upsert('machines', {
+          ...EMPTY_MACHINE,
           name: '',
           category: nm.category,
           brand: nm.brand,

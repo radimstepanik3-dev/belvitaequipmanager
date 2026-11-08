@@ -63,3 +63,8 @@ export function errorMessage(e: unknown): string {
   if (e && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message);
   return String(e);
 }
+
+/** České skloňování podle počtu: plural(3, 'stroj', 'stroje', 'strojů') → "3 stroje" */
+export function plural(n: number, one: string, few: string, many: string) {
+  return `${n} ${n === 1 ? one : n >= 2 && n <= 4 ? few : many}`;
+}

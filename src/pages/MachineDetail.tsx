@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { CalendarPlus, Pencil, Trash2, Wrench, Sparkles, ChevronLeft, Plus } from 'lucide-react';
+import { CalendarPlus, Pencil, Trash2, Wrench, Sparkles, ChevronLeft, Plus, Tag } from 'lucide-react';
 import { backend } from '../lib/backend';
 import { useFleet } from '../lib/fleet';
 import { useTable } from '../lib/hooks';
-import { SERVICE_STATUS } from '../lib/domain';
+import { LIFECYCLE, SERVICE_STATUS } from '../lib/domain';
 import { uploadMedia } from '../lib/media';
 import type { Media } from '../lib/types';
 import { Badge, Button, Card, confirmDelete, Empty, PageHeader, Spinner, Tabs, useToast } from '../components/ui';
 import { AvailabilityBadge } from '../components/MachineStatus';
 import { CoverImage, DocumentList, DocumentPicker, PhotoGrid, PhotoPicker } from '../components/Media';
 import { BookingList, BookingModal, RateEditor } from '../components/Rental';
+import { SalesPanel } from '../components/Sales';
+import { PurchasePanel } from '../components/Purchase';
+import { LEAD_STATUS } from '../lib/trade';
 import { errorMessage, fmtDate, fmtDateTime, machineTitle, money, number } from '../lib/util';
 
-type Tab = 'prehled' | 'fotky' | 'dokumenty' | 'servis' | 'pujcovna';
+type Tab = 'prehled' | 'prodej' | 'nakup' | 'fotky' | 'dokumenty' | 'servis' | 'pujcovna';
 
 export function MachineDetail() {
   const { id = '' } = useParams();
@@ -38,6 +41,8 @@ export function MachineDetail() {
   const rate = f.rates.get(id);
   const av = f.availability.get(id)!;
   const own = m.ownership === 'vlastni';
+  const openLeads = f.leads.filter((l) => l.machine_id === id && LEAD_STATUS[l.status].open).length;
+  const mg = f.margin(m);
 
   const addFiles = async (files: File[], kind: Media['kind']) => {
     setUploading(true);
@@ -81,11 +86,28 @@ export function MachineDetail() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'prehled', label: 'Přehled' },
+    ...(own
+      ? [
+          { id: 'prodej' as Tab, label: `Prodej${openLeads ? ` (${openLeads})` : ''}` },
+          { id: 'nakup' as Tab, label: 'Nákup a náklady' },
+        ]
+      : []),
     { id: 'fotky', label: `Fotky (${photos.length})` },
     { id: 'dokumenty', label: `Dokumenty (${docs.length})` },
     { id: 'servis', label: `Servis (${services.length})` },
-    ...(own ? [{ id: 'pujcovna' as Tab, label: `Půjčovna a prodej (${bookings.filter((b) => b.status === 'aktivni').length})` }] : []),
+    ...(own ? [{ id: 'pujcovna' as Tab, label: `Půjčovna a rezervace (${bookings.filter((b) => b.status === 'aktivni').length})` }] : []),
   ];
+
+  /** Fotky stroje (bez servisních) pro AI inzerát – hlavní fotka první. */
+  const photoBlobs = async () => {
+    const list = photos.filter((p) => !p.service_order_id).sort((a, b) => (a.id === m.cover_media_id ? -1 : b.id === m.cover_media_id ? 1 : 0));
+    const out: Blob[] = [];
+    for (const p of list.slice(0, 3)) {
+      const url = await backend.fileUrl(p.path);
+      if (url) out.push(await (await fetch(url)).blob());
+    }
+    return out;
+  };
 
   return (
     <>
@@ -102,9 +124,14 @@ export function MachineDetail() {
         }
         actions={
           <>
+            {own && m.lifecycle !== 'prodano' && m.lifecycle !== 'vyrazeno' && (
+              <Button variant="primary" onClick={() => setTab('prodej')}>
+                <Tag className="h-4 w-4" /> Prodej
+              </Button>
+            )}
             {own && m.lifecycle === 'aktivni' && (
-              <Button variant="primary" onClick={() => setBookingOpen(true)}>
-                <CalendarPlus className="h-4 w-4" /> Půjčit / rezervovat
+              <Button onClick={() => setBookingOpen(true)}>
+                <CalendarPlus className="h-4 w-4" /> Rezervovat / půjčit
               </Button>
             )}
             <Link to={`/servis/novy?stroj=${id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm hover:bg-slate-50">
@@ -153,10 +180,12 @@ export function MachineDetail() {
             {own && (
               <Card title="Obchod">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <P l="Prodej" v={m.for_sale ? money(m.sale_price) : 'Není na prodej'} />
-                  <P l="Pořizovací cena" v={money(m.purchase_price)} />
+                  <P l={m.lifecycle === 'prodano' ? 'Prodáno za' : 'Nabídková cena'} v={m.lifecycle === 'prodano' ? money(m.sold_price) : m.for_sale ? money(m.sale_price) : 'Není na prodej'} />
+                  <P l="Náklady celkem" v={f.landed(m).total ? money(f.landed(m).total) : '—'} />
+                  <P l={m.lifecycle === 'prodano' ? 'Zisk' : 'Očekávaný zisk'} v={mg ? `${money(mg.abs)} (${mg.pct.toFixed(1)} %)` : '—'} />
+                  <P l="Skladem" v={`${f.days(m)} dní`} />
                   <P l="Půjčovna" v={m.for_rent ? (rate?.price_day ? `${money(rate.price_day)} / den` : 'bez ceníku') : 'Není v půjčovně'} />
-                  <P l="Stav evidence" v={{ aktivni: 'Aktivní', prodano: 'Prodáno', vyrazeno: 'Vyřazeno' }[m.lifecycle]} />
+                  <P l="Stav evidence" v={LIFECYCLE[m.lifecycle]} />
                 </dl>
               </Card>
             )}
@@ -228,6 +257,9 @@ export function MachineDetail() {
           )}
         </Card>
       )}
+
+      {tab === 'prodej' && own && <SalesPanel machine={m} photoBlobs={photoBlobs} />}
+      {tab === 'nakup' && own && <PurchasePanel machine={m} />}
 
       {tab === 'pujcovna' && own && (
         <div className="space-y-4">

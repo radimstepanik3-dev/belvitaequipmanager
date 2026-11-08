@@ -66,6 +66,7 @@ export const BOOKING_TYPE: Record<BookingType, { label: string; color: string; b
 // ---------- stav stroje ----------
 
 export type AvailabilityKey =
+  | 'nakup'
   | 'volny'
   | 'pujceno'
   | 'po_terminu'
@@ -77,6 +78,7 @@ export type AvailabilityKey =
   | 'zakaznik';
 
 export const AVAILABILITY: Record<AvailabilityKey, { label: string; color: string; dot: string }> = {
+  nakup: { label: 'Nákup / na cestě', color: 'bg-teal-100 text-teal-800', dot: 'bg-teal-500' },
   volny: { label: 'Volný', color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-500' },
   pujceno: { label: 'Půjčeno', color: 'bg-rose-100 text-rose-800', dot: 'bg-rose-500' },
   po_terminu: { label: 'Půjčeno – po termínu', color: 'bg-red-200 text-red-900', dot: 'bg-red-700' },
@@ -101,6 +103,7 @@ export interface Availability {
 export function machineAvailability(m: Machine, bookings: Booking[], services: ServiceOrder[]): Availability {
   if (m.lifecycle === 'prodano') return { key: 'prodano' };
   if (m.lifecycle === 'vyrazeno') return { key: 'vyrazeno' };
+  if (m.lifecycle === 'nakup') return { key: 'nakup' };
   const t = today();
   const service = services.find((s) => s.machine_id === m.id && isServiceOpen(s.status));
   if (service) return { key: 'v_servisu', service };
@@ -171,6 +174,19 @@ export const DEFAULT_SETTINGS: CompanySettings = {
   coef_deposit: 3,
   daily_pct_of_value: 0.35,
   categories: DEFAULT_CATEGORIES,
+  target_margin_pct: 15,
+  stock_warn_days: 120,
+  // orientační kurzy – aktualizujte tlačítkem „Načíst kurzy ČNB“ v Nastavení
+  currency_rates: { CZK: 1, EUR: 25, USD: 23, GBP: 29, CHF: 26, PLN: 5.8, SEK: 2.2, DKK: 3.35, NOK: 2.1, HUF: 0.064, JPY: 0.15 },
+  rates_date: '',
+  base_city: 'Brno',
+  tr_rate_small: 30,
+  tr_rate_medium: 45,
+  tr_rate_large: 60,
+  tr_rate_heavy: 80,
+  tr_return_factor: 1.3,
+  tr_loading_fee: 2500,
+  tr_oversize_fee: 9000,
 };
 
 const round = (v: number, step = 10) => Math.round(v / step) * step;
@@ -225,3 +241,46 @@ export function nextServiceNumber(existing: ServiceOrder[]): string {
     .reduce((a, b) => Math.max(a, b), 0);
   return `${prefix}${String(max + 1).padStart(4, '0')}`;
 }
+
+// ---------- šablona nového stroje ----------
+
+import type { Machine as M } from './types';
+export type MachineDraft = Omit<M, 'id' | 'created_at' | 'updated_at'>;
+
+export const EMPTY_MACHINE: MachineDraft = {
+  name: '',
+  category: '',
+  brand: '',
+  model: '',
+  year: null,
+  serial_number: '',
+  hours: null,
+  weight_kg: null,
+  power_kw: null,
+  condition: '',
+  location: '',
+  description: '',
+  ownership: 'vlastni',
+  customer_name: '',
+  lifecycle: 'aktivni',
+  for_sale: true,
+  sale_price: null,
+  purchase_price: null,
+  for_rent: false,
+  cover_media_id: null,
+  ai_data: null,
+  transport_length_m: null,
+  transport_width_m: null,
+  transport_height_m: null,
+  sold_price: null,
+  sold_at: null,
+  buyer_name: '',
+  listing: null,
+};
+
+export const LIFECYCLE: Record<M['lifecycle'], string> = {
+  nakup: 'Nákup / na cestě',
+  aktivni: 'Skladem',
+  prodano: 'Prodáno',
+  vyrazeno: 'Vyřazeno',
+};

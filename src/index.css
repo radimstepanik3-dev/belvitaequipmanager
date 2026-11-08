@@ -18,3 +18,11 @@ input[type='datetime-local'] {
 .grid > * {
   min-width: 0;
 }
+
+.guide ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.guide li {
+  margin: 0.4rem 0;
+}

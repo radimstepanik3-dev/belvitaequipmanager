@@ -3,39 +3,16 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Sparkles, X, Save } from 'lucide-react';
 import { backend } from '../lib/backend';
 import { useRow, useSettings } from '../lib/hooks';
-import { CONDITIONS } from '../lib/domain';
+import { CONDITIONS, EMPTY_MACHINE, LIFECYCLE, type MachineDraft } from '../lib/domain';
 import { aiAvailable, recognizeMachine } from '../lib/ai';
 import { uploadMedia } from '../lib/media';
-import type { AiRecognition, Machine } from '../lib/types';
+import type { AiRecognition } from '../lib/types';
 import { Badge, Button, Card, Checkbox, Field, Input, PageHeader, Select, Spinner, Textarea, useToast } from '../components/ui';
 import { PhotoPicker } from '../components/Media';
 import { errorMessage, numOrNull } from '../lib/util';
 
-type Form = Omit<Machine, 'id' | 'created_at' | 'updated_at'>;
-
-const EMPTY: Form = {
-  name: '',
-  category: '',
-  brand: '',
-  model: '',
-  year: null,
-  serial_number: '',
-  hours: null,
-  weight_kg: null,
-  power_kw: null,
-  condition: '',
-  location: '',
-  description: '',
-  ownership: 'vlastni',
-  customer_name: '',
-  lifecycle: 'aktivni',
-  for_sale: false,
-  sale_price: null,
-  purchase_price: null,
-  for_rent: false,
-  cover_media_id: null,
-  ai_data: null,
-};
+type Form = MachineDraft;
+const EMPTY = EMPTY_MACHINE;
 
 const CONF: Record<AiRecognition['confidence'], { label: string; color: string }> = {
   vysoka: { label: 'vysoká jistota', color: 'bg-emerald-100 text-emerald-800' },
@@ -53,6 +30,8 @@ export function MachineForm() {
   const [form, setForm] = useState<Form>(() => ({
     ...EMPTY,
     ownership: params.get('zakaznik') ? 'zakaznik' : 'vlastni',
+    for_sale: !params.get('zakaznik'),
+    lifecycle: params.get('nakup') ? 'nakup' : 'aktivni',
   }));
   const [files, setFiles] = useState<File[]>([]);
   const [ai, setAi] = useState<AiRecognition | null>(null);
@@ -113,6 +92,9 @@ export function MachineForm() {
       year,
       weight_kg: ai.weight_kg ?? f.weight_kg,
       power_kw: ai.power_kw ?? f.power_kw,
+      transport_length_m: ai.transport_length_m ?? f.transport_length_m,
+      transport_width_m: ai.transport_width_m ?? f.transport_width_m,
+      transport_height_m: ai.transport_height_m ?? f.transport_height_m,
       serial_number: ai.serial_number || f.serial_number,
       description: f.description.includes(extra) ? f.description : [f.description, extra].filter(Boolean).join('\n\n'),
       ai_data: ai,
@@ -133,7 +115,7 @@ export function MachineForm() {
       }
       if (!m.cover_media_id && firstId) await backend.upsert('machines', { id: m.id, cover_media_id: firstId });
       toast(id ? 'Uloženo' : 'Stroj založen');
-      nav(`/stroje/${m.id}`, { replace: true });
+      nav(`/stroje/${m.id}${!id && m.lifecycle === 'nakup' ? '?tab=nakup' : ''}`, { replace: true });
     } catch (err) {
       toast(errorMessage(err), 'err');
     } finally {
@@ -148,7 +130,7 @@ export function MachineForm() {
   return (
     <form onSubmit={save} className="space-y-4">
       <PageHeader
-        title={id ? 'Upravit stroj' : 'Nový stroj'}
+        title={id ? 'Upravit stroj' : form.lifecycle === 'nakup' ? 'Nový nákup stroje' : 'Nový stroj'}
         actions={
           <>
             <Button type="button" variant="ghost" onClick={() => nav(-1)}>
@@ -260,6 +242,15 @@ export function MachineForm() {
           <Field label="Umístění">
             <Input {...txt('location')} placeholder="areál, stavba…" />
           </Field>
+          <Field label="Přepravní délka (m)">
+            <Input {...num('transport_length_m')} />
+          </Field>
+          <Field label="Přepravní šířka (m)">
+            <Input {...num('transport_width_m')} />
+          </Field>
+          <Field label="Přepravní výška (m)">
+            <Input {...num('transport_height_m')} />
+          </Field>
           <Field label="Popis, výbava, poznámky" className="sm:col-span-2 lg:col-span-4">
             <Textarea rows={4} {...txt('description')} />
           </Field>
@@ -287,19 +278,21 @@ export function MachineForm() {
             <>
               <Field label="Stav evidence">
                 <Select {...txt('lifecycle')}>
-                  <option value="aktivni">Aktivní</option>
-                  <option value="prodano">Prodáno</option>
-                  <option value="vyrazeno">Vyřazeno</option>
+                  {Object.entries(LIFECYCLE).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
                 </Select>
               </Field>
-              <Field label="Pořizovací cena (Kč)">
+              <Field label="Pořizovací cena (Kč bez DPH)" hint="Podrobný nákup s dopravou a clem v záložce Nákup a náklady">
                 <Input {...num('purchase_price')} />
               </Field>
               <div />
               <div className="flex flex-col gap-2 rounded-lg bg-slate-50 p-3 sm:col-span-2">
                 <Checkbox checked={form.for_sale} onChange={(v) => set('for_sale', v)} label="Nabízíme k prodeji" />
                 {form.for_sale && (
-                  <Field label="Prodejní cena bez DPH (Kč)">
+                  <Field label="Nabídková cena bez DPH (Kč)" hint="Návrh ceny podle nákladů a marže najdete v záložce Prodej">
                     <Input {...num('sale_price')} />
                   </Field>
                 )}
