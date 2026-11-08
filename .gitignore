@@ -6,3 +6,4 @@ dev-dist
 android/app/build
 ios/App/Pods
 *.log
+strojpark.zip
