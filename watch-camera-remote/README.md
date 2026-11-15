@@ -62,7 +62,8 @@ Na mobilu musí být nainstalovaná **Huawei Health** a hodinky v ní spárovan�
 - **Riziko – Android 16:** Fold 7 má Android 16 (One UI 8), ale Huawei u Wear Engine pro cizí telefony dokumentuje jen Android 6–14 (podporu Androidu 14 přidala verze SDK 5.0.3.304, vyžaduje Huawei Health 14.0.12.310+). Jestli spojení na Androidu 16 funguje, je potřeba vyzkoušet – nejdřív si to ověř na oficiální ukázce Wear Engine, než budeš čekat na schválení a ladit tuhle aplikaci.
 - Podporu GT 5 ve Wear Engine si ověř v tabulce *Supported Devices* na developer.huawei.com (starší seznamy končí u GT 4).
 - Aplikace se při složení/rozložení telefonu nerestartuje, takže spojení s hodinkami i nastavení kamery zůstane. Funguje na vnějším i vnitřním displeji.
-- Tip: polorozložený Fold postavený na stůl poslouží jako stativ – hodinky jako spoušť.
+- **Flex režim (stativ):** když Fold postavíš polorozložený na stůl, náhled kamery, odpočet a stav se přesunou do horní (stojící) poloviny displeje a náhled ukáže celý záběr. Tlačítko *Vyfotit* zůstane na spodní polovině ležící na stole. Po narovnání nebo složení se náhled vrátí přes celý displej.
+- Aplikace se otáčí podle polohy telefonu i při zamknutém automatickém otáčení – jinak by v poloze na stole nepoznala, která polovina je nahoře.
 
 ## Poznámky a omezení
 - Android dovoluje kameru jen aplikaci v popředí → aplikace na mobilu musí být otevřená.

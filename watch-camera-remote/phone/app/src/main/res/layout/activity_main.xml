@@ -5,38 +5,47 @@
     android:background="#000"
     android:keepScreenOn="true">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview"
+    <!-- Camera area. Fills the window normally; when the phone stands half-folded
+         on a table (Flex mode) MainActivity shrinks it to the half above the hinge. -->
+    <FrameLayout
+        android:id="@+id/cameraArea"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/countdown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textColor="#FFF"
-        android:textSize="160sp"
-        android:visibility="gone" />
+        <androidx.camera.view.PreviewView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-    <View
-        android:id="@+id/flashOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#FFF"
-        android:alpha="0" />
+        <TextView
+            android:id="@+id/countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="#FFF"
+            android:textSize="160sp"
+            android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:background="#88000000"
-        android:padding="12dp"
-        android:textColor="#FFF"
-        android:textSize="16sp"
-        android:text="Hledám hodinky…" />
+        <View
+            android:id="@+id/flashOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFF"
+            android:alpha="0" />
 
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:background="#88000000"
+            android:padding="12dp"
+            android:textColor="#FFF"
+            android:textSize="16sp"
+            android:text="Hledám hodinky…" />
+    </FrameLayout>
+
+    <!-- Stays at the bottom of the window: in Flex mode that is the half lying on the table -->
     <Button
         android:id="@+id/shutter"
         android:layout_width="wrap_content"

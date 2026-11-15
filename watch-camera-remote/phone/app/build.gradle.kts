@@ -34,6 +34,10 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("androidx.camera:camera-view:$camerax")
 
+    // Fold posture (Flex mode) detection
+    implementation("androidx.window:window:1.3.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
     // Huawei Wear Engine – communication with the watch app
     implementation("com.huawei.hms:wearengine:5.0.3.304")
 }

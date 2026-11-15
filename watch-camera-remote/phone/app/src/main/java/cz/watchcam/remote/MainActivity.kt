@@ -6,9 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.provider.MediaStore
-import android.view.OrientationEventListener
-import android.view.Surface
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -16,8 +15,18 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
+import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.window.layout.FoldingFeature
+import androidx.window.layout.WindowInfoTracker
+import androidx.window.layout.WindowLayoutInfo
 import cz.watchcam.remote.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -31,22 +40,6 @@ class MainActivity : AppCompatActivity() {
     private var lens = CameraSelector.LENS_FACING_BACK
     private var flashMode = ImageCapture.FLASH_MODE_AUTO
     private var countdown: CountDownTimer? = null
-
-    // The activity is not recreated on fold/unfold/rotation (see manifest), so the
-    // photo orientation is kept in sync with the physical device orientation here.
-    private val orientationListener by lazy {
-        object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                if (orientation == ORIENTATION_UNKNOWN) return
-                imageCapture?.targetRotation = when (orientation) {
-                    in 45 until 135 -> Surface.ROTATION_270
-                    in 135 until 225 -> Surface.ROTATION_180
-                    in 225 until 315 -> Surface.ROTATION_90
-                    else -> Surface.ROTATION_0
-                }
-            }
-        }
-    }
 
     private val cameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -63,19 +56,18 @@ class MainActivity : AppCompatActivity() {
 
         b.shutter.setOnClickListener { takePhoto() }
 
+        // Follow fold posture changes (flat / half-folded on a table)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WindowInfoTracker.getOrCreate(this@MainActivity)
+                    .windowLayoutInfo(this@MainActivity)
+                    .collect { applyPosture(it) }
+            }
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
         ) startCamera() else cameraPermission.launch(Manifest.permission.CAMERA)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        orientationListener.enable()
-    }
-
-    override fun onStop() {
-        orientationListener.disable()
-        super.onStop()
     }
 
     override fun onDestroy() {
@@ -138,6 +130,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun takePhoto() {
         val capture = imageCapture ?: return
+        // The activity is not recreated on rotation/fold (see manifest), so save the
+        // photo in the orientation the screen is showing right now.
+        b.preview.display?.let { capture.targetRotation = it.rotation }
         val name = "WATCH_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
@@ -160,6 +155,34 @@ class MainActivity : AppCompatActivity() {
                     link.send(JSONObject().put("event", "error").put("text", "Focení selhalo"))
                 }
             })
+    }
+
+    // ---------- Foldable (Flex mode) ----------
+    /**
+     * When the phone stands half-folded with a horizontal hinge (tabletop posture),
+     * the camera area is limited to the half above the hinge and shows the whole
+     * frame. In every other posture it fills the window as before.
+     */
+    private fun applyPosture(info: WindowLayoutInfo) {
+        val hingeTop = info.displayFeatures
+            .filterIsInstance<FoldingFeature>()
+            .firstOrNull {
+                it.state == FoldingFeature.State.HALF_OPENED &&
+                    it.orientation == FoldingFeature.Orientation.HORIZONTAL
+            }?.bounds?.top
+
+        b.root.doOnLayout { root ->
+            // Hinge bounds are in window coordinates; the root may start below the status bar
+            val rootTop = IntArray(2).also { root.getLocationInWindow(it) }[1]
+            val topHalf = hingeTop?.minus(rootTop)?.takeIf { it > 0 }
+
+            b.cameraArea.updateLayoutParams {
+                height = topHalf ?: ViewGroup.LayoutParams.MATCH_PARENT
+            }
+            b.preview.scaleType =
+                if (topHalf != null) PreviewView.ScaleType.FIT_CENTER
+                else PreviewView.ScaleType.FILL_CENTER
+        }
     }
 
     // ---------- UI helpers ----------
