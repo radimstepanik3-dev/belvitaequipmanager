@@ -1,0 +1,33 @@
+{
+  "app": {
+    "bundleName": "cz.watchcam.remote",
+    "vendor": "watchcam",
+    "version": { "code": 1000000, "name": "1.0.0" }
+  },
+  "deviceConfig": {},
+  "module": {
+    "package": "cz.watchcam.remote",
+    "name": ".MyApplication",
+    "deviceType": ["liteWearable"],
+    "distro": {
+      "deliveryWithInstall": true,
+      "moduleName": "entry",
+      "moduleType": "entry"
+    },
+    "abilities": [
+      {
+        "name": "default",
+        "icon": "$media:icon",
+        "label": "Fotak",
+        "type": "page",
+        "visible": true
+      }
+    ],
+    "js": [
+      {
+        "pages": ["pages/index/index"],
+        "name": "default"
+      }
+    ]
+  }
+}

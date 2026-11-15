@@ -1,0 +1,25 @@
+<div class="container" onswipe="onSwipe">
+  <text class="status {{ connected ? 'ok' : 'err' }}">{{ status }}</text>
+
+  <!-- Countdown overlay -->
+  <text class="countdown" show="{{ countdown > 0 }}">{{ countdown }}</text>
+
+  <!-- Main shutter button -->
+  <div class="shutter" onclick="onShutter" show="{{ countdown === 0 }}">
+    <div class="shutter-inner"></div>
+  </div>
+
+  <div class="row">
+    <div class="small-btn" onclick="onTimer">
+      <text class="small-txt">{{ timerLabel }}</text>
+    </div>
+    <div class="small-btn" onclick="onSwitch">
+      <text class="small-txt">OTOČ</text>
+    </div>
+    <div class="small-btn" onclick="onFlash">
+      <text class="small-txt">{{ flashLabel }}</text>
+    </div>
+  </div>
+
+  <text class="counter">Fotek: {{ photos }}</text>
+</div>

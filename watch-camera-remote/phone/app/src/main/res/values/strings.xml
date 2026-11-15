@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Watch Fotak</string>
+    <!-- App ID from AppGallery Connect (Project settings → App information) -->
+    <string name="hms_app_id">REPLACE_WITH_APP_ID</string>
+    <!-- Watch app identity – must match watch/entry/src/main/config.json -->
+    <string name="watch_bundle_name">cz.watchcam.remote</string>
+    <!-- Signing fingerprint of the watch app (from DevEco Studio, see README) -->
+    <string name="watch_fingerprint">REPLACE_WITH_WATCH_FINGERPRINT</string>
+</resources>
