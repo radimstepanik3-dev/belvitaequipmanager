@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.provider.MediaStore
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +32,22 @@ class MainActivity : AppCompatActivity() {
     private var flashMode = ImageCapture.FLASH_MODE_AUTO
     private var countdown: CountDownTimer? = null
 
+    // The activity is not recreated on fold/unfold/rotation (see manifest), so the
+    // photo orientation is kept in sync with the physical device orientation here.
+    private val orientationListener by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+                imageCapture?.targetRotation = when (orientation) {
+                    in 45 until 135 -> Surface.ROTATION_270
+                    in 135 until 225 -> Surface.ROTATION_180
+                    in 225 until 315 -> Surface.ROTATION_90
+                    else -> Surface.ROTATION_0
+                }
+            }
+        }
+    }
+
     private val cameraPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) startCamera() else setStatus("Bez oprávnění ke kameře to nepůjde")
@@ -48,6 +66,16 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
         ) startCamera() else cameraPermission.launch(Manifest.permission.CAMERA)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        orientationListener.enable()
+    }
+
+    override fun onStop() {
+        orientationListener.disable()
+        super.onStop()
     }
 
     override fun onDestroy() {

@@ -35,5 +35,5 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax")
 
     // Huawei Wear Engine – communication with the watch app
-    implementation("com.huawei.hms:wearengine:5.0.3.300")
+    implementation("com.huawei.hms:wearengine:5.0.3.304")
 }
