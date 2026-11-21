@@ -1,0 +1,16 @@
+# StrojDiag - diagnostika stavebnich stroju pro Flipper Zero
+# (J1939 chyby a ziva data, tlak hydrauliky, baterie, frekvence/PWM, teplota)
+App(
+    appid="strojdiag",
+    name="StrojDiag",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="strojdiag_app",
+    requires=["gui", "storage", "notification", "power"],
+    stack_size=4 * 1024,
+    sources=["*.c", "!tests"],
+    fap_category="GPIO",
+    fap_icon="strojdiag_10px.png",
+    fap_version="1.0",
+    fap_description="Diagnostika stavebnich stroju: chyby J1939, ziva data, tlak hydrauliky, baterie, PWM, teplota",
+    fap_author="StrojPark",
+)

@@ -1,0 +1,13 @@
+# Vlastni popisy chybovych kodu (SPN) pro aplikaci StrojDiag.
+# Zkopiruj na SD kartu Flipperu jako:  apps_data/strojdiag/spn.txt
+#
+# Format radku:  SPN;Popis       (popis bez diakritiky, max ~40 znaku)
+# Radky zacinajici # jsou komentare. Popis ze souboru ma prednost
+# pred vestavenou databazi, takze jde opravit i obecne nazvy.
+#
+# Kody vyrobce (SPN 520192 - 524287) najdes v servisni dokumentaci
+# konkretniho stroje / motoru. Priklad (vymysleny, nahrad skutecnym):
+# 520192;Priklad - snimac tlaku pilotniho rizeni
+#
+# Prepsani obecneho popisu:
+# 1638;Teplota hydr. oleje v nadrzi

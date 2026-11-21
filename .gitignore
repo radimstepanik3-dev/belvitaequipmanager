@@ -7,3 +7,5 @@ android/app/build
 ios/App/Pods
 *.log
 strojpark.zip
+flipper/strojdiag/dist
+flipper/strojdiag/tests/test_core

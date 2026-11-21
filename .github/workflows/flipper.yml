@@ -1,0 +1,46 @@
+# Otestuje jadro a sestavi aplikaci StrojDiag pro Flipper Zero (.fap).
+# Hotovy soubor je ke stazeni jako artefakt "strojdiag-fap" u kazdeho behu.
+name: Flipper aplikace StrojDiag
+
+on:
+  push:
+    paths:
+      - "flipper/**"
+      - ".github/workflows/flipper.yml"
+  pull_request:
+    paths:
+      - "flipper/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testy jadra (J1939, mereni)
+        run: make -C flipper/strojdiag/tests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk-channel: [release, dev]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sestaveni pres ufbt
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1
+        id: build
+        with:
+          app-dir: flipper/strojdiag
+          sdk-channel: ${{ matrix.sdk-channel }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strojdiag-fap-${{ matrix.sdk-channel }}
+          path: |
+            ${{ steps.build.outputs.fap-artifacts }}
+            flipper/strojdiag/dist/*.fap

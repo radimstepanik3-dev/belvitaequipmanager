@@ -15,6 +15,7 @@ Celý tým sdílí stejná data, fotky a dokumenty v cloudu a změny od kolegů 
 | **AI** | Rozpoznání stroje z 1–5 fotek (druh, značka, typ, rok, hmotnost, výkon, přepravní rozměry, viditelný stav) a psaní inzerátů. Model Claude (Anthropic), klíč je jen na serveru. |
 | **Servis** | Příjem → diagnostika → čeká na díly → oprava → hotovo → předáno. Pracovní list, náhradní díly, fotky z příjmu, průběhu i dokončení, kalkulace s DPH, **PDF pracovní list**. Servis vlastních strojů se počítá do nákladů stroje. |
 | **Půjčovna** | Ceník a cenotvorba, **PDF ceník**, pronájmy a rezervace s kontrolou kolizí, stavy strojů, časová osa vytížení. |
+| **Diagnostika u stroje** (Flipper Zero) | Aplikace **StrojDiag** pro Flipper Zero + modul, který si postavíte: chybové kódy a živá data motoru (CAN J1939), tlaky hydrauliky (2 snímače, LS marže, špičky), test baterie a startování, frekvence/PWM snímačů a ventilů, teplota oleje. Záznamy v CSV / candump se přikládají k servisní zakázce. Viz [`flipper/`](flipper/README.md). |
 
 Všichni přihlášení uživatelé mohou vše prohlížet i upravovat; u záznamů se ukládá, kdo je založil a kdo je naposledy změnil.
 
@@ -159,6 +160,7 @@ supabase/
   functions/cnb-rates/    kurzy ČNB
   functions/_shared/      zadání pro AI a parser kurzů (sdílí je i aplikace)
 android/                nativní Android projekt (Capacitor)
+flipper/                StrojDiag – aplikace pro Flipper Zero a návod na stavbu diagnostického modulu
 ```
 
 ## Možná další rozšíření
